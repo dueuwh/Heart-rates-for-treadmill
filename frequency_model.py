@@ -252,6 +252,7 @@ if __name__ == "__main__":
         y = load[4, 1, :]
         
         total_results[file] = []
+        total_results[file+"_loss"] = {}
         
         est_axis = []
         none_list = []
@@ -278,6 +279,7 @@ if __name__ == "__main__":
                 none_list.append(1)
                 none_axis.append(i)
         
+        
         print(f"label lenght: {len(label)}, est_axis max: {max(est_axis)}")
         if len(label) < len(est_axis):
             est_axis = ext_axis[:-abs(len(label) - len(est_axis))]
@@ -289,16 +291,56 @@ if __name__ == "__main__":
         rmse = round(np.sqrt(mse), 2)
         r2 = round(r2_score(label_loss, total_results[file]), 2)
         
+        total_results[file+"_loss"]["mae"] = mae
+        total_results[file+"_loss"]["mse"] = mse
+        total_results[file+"_loss"]["rmse"] = rmse
+        total_results[file+"_loss"]["r2"] = r2
+        
+        frame_length = len(label)
+        x_value = []
+        x_label = []
+        for i in range(frame_length):
+            if i % 450 == 0:
+                min_num = str((i//30)//60)
+                sec_num = str((i//30)%60)
+                if len(sec_num) == 1:
+                    sec_num += '0'
+                x_label.append(min_num+':'+sec_num)
+                x_value.append(i)
+        
         plt.scatter(est_axis, total_results[file], label="pred", s=1, c='r')
         # plt.scatter(none_axis, none_list, label="none", s=5, c='g')
         plt.plot(label, label="label")
         plt.title(f"{file} mae: {mae}, mse: {mse}, rmse: {rmse}, r square: {r2}")
         plt.legend()
-        plt.xlabel("frame number")
+        plt.xticks(x_value, x_label)
+        plt.xlabel("Time")
         plt.ylabel("BPM")
         plt.show()
-        
-        
+    
+    mae_mean = 0
+    mse_mean = 0
+    rmse_mean = 0
+    r_square = 0
+
+    for file in file_list:
+        if "LHT_1" in file:
+            continue
+        mae_mean += total_results[file+"_loss"]["mae"]
+        mse_mean += total_results[file+"_loss"]["mse"]
+        rmse_mean += total_results[file+"_loss"]["rmse"]
+        r_square += total_results[file+"_loss"]["r2"]
+    
+    denominator = len(file_list)
+    mae_mean = mae_mean / denominator
+    mse_mean = mse_mean / denominator
+    rmse_mean = rmse_mean / denominator
+    r_square = r_square / denominator
+    
+    print("mae_mean: ", mae_mean)
+    print("mse_mean: ", mse_mean)
+    print("rmse_mean: ", rmse_mean)
+    print("r_square: ", r_square)
         
 # legacy
 
