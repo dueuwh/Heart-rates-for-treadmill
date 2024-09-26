@@ -36,7 +36,7 @@ def coord_preprocessing(coords_series):
         y_series.append(temp_summation[1])
     return x_series, y_series
 
-def freq_model_pipeline(ldmk_list, data_folder, stride, window):
+def rppg_pipeline(ldmk_list, data_folder, stride, window):
     
     # === skin extraction === #
     
@@ -102,13 +102,13 @@ def freq_model_pipeline(ldmk_list, data_folder, stride, window):
                 
         else:
             print(f"A face is not detected {processed_frames_count}")
-            cropped_skin_im, full_skin_im = skin_ex.extract_skin(image, landmark_coords)  # 감지 못하면 같은 장소 크롭
+            cropped_skin_im, full_skin_im = skin_ex.extract_skin(image, landmark_coords)  # If face detection is failed, cropping same coordinates
             frame_list.append(cropped_skin_im)
             full_skin_im = image
         
         # landmark check
         # plt.imshow(image)
-        # for i in range(coord_arr.shape[0]):
+        # for i in range(coord_arr.shape[0]):`
         #     plt.scatter(coord_arr[i, 0], coord_arr[i, 1], s=1, c='r')
         # plt.show()
         
@@ -117,30 +117,31 @@ def freq_model_pipeline(ldmk_list, data_folder, stride, window):
         # plt.title(f"cropped_skin_im {processed_frames_count}")
         # plt.show()
         
-        sig_list.append(holistic_mean(cropped_skin_im, np.int32(55), np.int32(200)))
+        sig_list.append(holistic_mean(cropped_skin_im, np.int32(55), np.int32(200))[0, :])
+        
         
         if len(sig_list) > sig_list_max:
             if passed_sig > passed_sig_max:
                 passed_sig = 0
                 del sig_list[0]
                 # pre-filtering
-                sig_list = signal_filtering(sig_list)
+                filter_input = np.array(sig_list)
+                sig_arr = signal_filtering(filter_input)
                 
                 # bvp
-                sig_list = np.expand_dims(sig_list, axis=0)
-                bvp_list = cpu_LGI(sig_list)
+                # sig_list = np.expand_dims(sig_list, axis=0)
+                bvp_arr = cpu_OMIT(sig_arr.T)
+                print("bvp_arr.shape: ", bvp_arr.shape)
                 
                 # post-filtering
-                bvp_list = signal_filtering(sig_list)
+                bvp_arr = signal_filtering(bvp_arr)
                 
-                pred_welch_hr, SNR, pSNR, Pfreqs, Power = BPM(data=bvp_list, fps=fps, startTime=0, minHz=0.5, maxHz=4.0, verb=False).BVP_to_BPM()
-            
+                pred_welch_hr, SNR, pSNR, Pfreqs, Power = BPM(data=bvp_arr, fps=fps, startTime=0, minHz=0.5, maxHz=4.0, verb=False).BVP_to_BPM()
+                
                 if SNR > SNR_threshold:
                     print("bpm: ", pred_welch_hr)
                 else:
                     print("bpm is invalid (SNR)")
-                    
-            
             else:
                 del frame_list[0]
                 passed_sig += 1
@@ -157,8 +158,8 @@ if __name__ == "__main__":
     select_data = folder_list[0]
     landmark_list = [i for i in range(468)]
     stride = 1  # seconds
-    window = 10  # seconds
-    freq_model_pipeline(landmark_list, select_data, stride, window)
+    window = 6  # seconds
+    rppg_pipeline(landmark_list, select_data, stride, window)
     
 # =============================================================================
 #     pure_dataset = "D:/home/rPPG/data/PURE_rPPG/"
