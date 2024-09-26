@@ -7,7 +7,7 @@ Created on Tue Apr  9 12:34:08 2024
 
 import numpy as np
 import math as m
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, welch
 from scipy.spatial import ConvexHull
 from PIL import Image, ImageDraw
 from numba import cuda, njit, prange
@@ -101,6 +101,20 @@ class BPM:
         pSNR = float(Power[0][Pmax]/(np.sum(Power)-Power[0][Pmax])[0])
         return Pfreqs[Pmax.squeeze()], SNR, pSNR, Pfreqs, Power
 
+def cpu_OMIT(signal):
+    """
+    OMIT method on CPU using Numpy.
+
+    Álvarez Casado, C., Bordallo López, M. (2022). Face2PPG: An unsupervised pipeline for blood volume pulse extraction from faces. arXiv (eprint 2202.04101).
+    """
+    X = signal
+    Q, R = np.linalg.qr(X)
+    S = Q[:, 0].reshape(1, -1)
+    P = np.identity(3) - np.matmul(S.T, S)
+    Y = np.dot(P, X)
+    bvp= Y[1, :]
+    return bvp
+
 def cpu_LGI(signal):
     """
     LGI method on CPU using Numpy.
@@ -109,7 +123,7 @@ def cpu_LGI(signal):
     """
     X = signal
     U, _, _ = np.linalg.svd(X)
-    S = U[:, :, 0]
+    S = U[:, :]
     S = np.expand_dims(S, 2)
     sst = np.matmul(S, np.swapaxes(S, 1, 2))
     p = np.tile(np.identity(3), (S.shape[0], 1, 1))
@@ -130,12 +144,14 @@ class Gaussian():
     def get(self, x):
         return (1/(2*m.pi*((self.stdd)**2))**1/2)*m.exp((-(x-self.mean)**2)/(2*(self.stdd)**2))
 
-def signal_filtering(signal, low_band=0.5, high_band=4.0, fs=30, N=2):
+def signal_filtering(signal, low_band=round(5/6, 4), high_band=3.0, fs=30, N=2):
     #미국 기준 HR 30~240 구간 측정 가능해야함. fs : 카메라 FPS
     [b_pulse, a_pulse] = butter(N, [low_band / fs * 2, high_band / fs * 2], btype='bandpass')
-    rst_signal = filtfilt(b_pulse, a_pulse, np.double(signal))
+    rst_signal_0 = filtfilt(b_pulse, a_pulse, np.double(signal[:, 0]))
+    rst_signal_1 = filtfilt(b_pulse, a_pulse, np.double(signal[:, 1]))
+    rst_signal_2 = filtfilt(b_pulse, a_pulse, np.double(signal[:, 2]))
 
-    return rst_signal
+    return np.concatenate((np.expand_dims(rst_signal_0, axis=1), np.expand_dims(rst_signal_1, axis=1), np.expand_dims(rst_signal_2, axis=1)), axis=1)
 
 class SkinExtractionConvexHull:
     """
@@ -233,13 +249,6 @@ class SkinExtractionConvexHull:
         return cropped_skin_im, skin_image
 
 
-class SkinExtractionConvexHull_Polygon():
-    def __init__(self, device="GPU"):
-        self.device=device
-    
-    def extract_skin(self, image, polygon_list):
-        
-
 def holistic_mean(im, RGB_LOW_TH, RGB_HIGH_TH):
     """
     This method computes the RGB-Mean Signal excluding 'im' pixels
@@ -277,5 +286,6 @@ def holistic_mean(im, RGB_LOW_TH, RGB_HIGH_TH):
         mean[0, 2] = mean_b 
     return mean
 
-
+if __name__ == "__main__":
+    passroun
 
