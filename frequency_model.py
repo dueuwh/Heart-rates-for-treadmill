@@ -361,10 +361,10 @@ if __name__ == "__main__":
     final_table_count = pd.DataFrame(0.0, index=index, columns=columns)
     final_table_count4r2 = pd.DataFrame(0.0, index=index, columns=columns)
     
-    for num in range(23): 
+    for num in range(3): 
         input_num = label_num = num
         coords_path = "D:/home/BCML/drax/PAPER/data/coordinates/stationary_kalman_2nd/"
-        coords_folders = os.listdir(coords_path)
+        coords_folders = [name for name in os.listdir(coords_path) if "_3_" in name]
         coords_input = np.load(coords_path+coords_folders[input_num])
         coords_input_x = coords_input[:, 0]
         coords_input_y = coords_input[:, 1]
