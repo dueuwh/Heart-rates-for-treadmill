@@ -1,3 +1,6 @@
 /data/
 /Deep-rPPG/
 /TimeMoE/
+/materials/
+/logs/
+/__pycache__/
