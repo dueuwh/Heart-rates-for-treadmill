@@ -24,7 +24,7 @@ class Params():
         "exp_power_curve":-1.0,
         "exp_base_scaling":3.5,
         "exp_power_scaling":-0.6,
-        "scaling_factor":0.2,
+        "scaling_factor":0.3,
         "bias":0.015,
         "sigmoid_p_coefficient":8.0,
         "sigmoid_e_constant":1.0,
@@ -33,6 +33,12 @@ class Params():
         "sigmoid_constant":-1.2,
         "arousal_adapt":0.01,
         "bpm_delay_window":200,
+        "acc_list_length":900,
+        "acc_sign_list_length":900,
+        "diff_main_list_length":900,
+        "diff_coeff_scaling":0.5,
+        "diff_coeff_e_coeff":-1000,
+        "diff_coeff_e_constant":7,
         
         }
     

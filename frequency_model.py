@@ -162,8 +162,21 @@ class freq_model():
         
         self.bpm_delay_window = hyperparameter_setting["bpm_delay_window"]
         
+        self.acc_length = hyperparameter_setting["acc_list_length"]
+        self.acc_queue = []
+        self.acc_sign_length = hyperparameter_setting["acc_sign_list_length"]
+        self.acc_sign_queue = []
+        
         self.exp_power_curve_idx = 0
         self.run_count = 0
+        
+        self.diff_main_length = hyperparameter_setting["diff_main_list_length"]
+        self.diff_main_list = []
+        
+        self.diff_coeff_scaling = hyperparameter_setting["diff_coeff_scaling"]
+        
+        self.diff_coeff_e_coeff = hyperparameter_setting["diff_coeff_e_coeff"]
+        self.diff_coeff_e_constant = hyperparameter_setting["diff_coeff_e_constant"]
         
         self.bpm_queue = []
         
@@ -261,35 +274,76 @@ class freq_model():
         
         if len(self.list_window) == self.num_window:
             
+            #=================================================================================
+            # cal diff main  
+            #=================================================================================
+
             diff_end = self.ewma_forward(self.list_window, self.a4fde)
             diff_start = self.ewma_backward(self.list_window, self.a4fds)
-            diff_acceleration = diff_end - diff_start
+            
 
             diff_main = self.ewma_forward(self.list_window, self.a4fdm)
-            diff = diff_acceleration * diff_main
+            self.diff_main_list.append(diff_main)
             
-            if len(self.list_diff_ewma) == self.num_fde:
-                del self.list_diff_ewma[0]
+            if len(self.diff_main_list) > self.diff_main_length:
+                del self.diff_main_list[0]
+
+            #=================================================================================
+            # cal diff acc
+            #=================================================================================
+
+            if len(self.diff_main_list) > 0:
+                diff_acceleration = np.mean(self.diff_main_list)
+            else:
+                diff_acceleration = 0
+
+            self.acc_queue.append(diff_acceleration)
             
-            self.list_diff_ewma.append(diff)
-            diff_final = self.ewma_forward(self.list_diff_ewma)
+            if len(self.acc_queue) > self.acc_length:
+                del self.acc_queue[0]
+            
+            #=================================================================================
+            # cal diff acc sign
+            #=================================================================================
+            
+            if len(self.acc_queue) > 2:
+                diff_acc_sign = np.mean(np.diff(self.acc_queue))
+            else:
+                diff_acc_sign = 0
+
+            self.acc_sign_queue.append(diff_acc_sign)
+            
+            if len(self.acc_sign_queue) > self.acc_sign_length:
+                del self.acc_sign_queue[0]
+            
+            #=================================================================================
+            # cal diff acc sign coefficient
+            #=================================================================================
+            
+            if len(self.acc_sign_queue) > 0:
+                diff_acc_sign_coefficient = np.mean(self.acc_sign_queue)
+            else:
+                diff_acc_sign_coefficient = 0
+            
+            diff_final = diff_acc_sign_coefficient * diff_acceleration
             
             # diff_sign = self.sig_e_numerator/(np.exp(self.sig_p_const+self.sig_p_coeffi*diff_end)+self.sig_e_const)-self.sig_const
             
-            # Utilizing an exponential function to progressively reduce the rate of change in BPM over frequency
-            bpm_output = self.bpm_previous + diff_final * self.scaling * self.exp_base_scaling ** (self.exp_power_scaling * abs(diff_final)) + self.bias
-            # bpm_output = self.bpm_previous + diff_sign * diff_final * self.scaling * self.exp_base_scaling ** (self.exp_power_scaling * abs(diff_final)) + self.bias
-            # Utilizing an sigmoid function to progressively reduce the rate of change in BPM over frequency
-            # bpm_output = self.bpm_previous + diff_final * self.scaling * self.sigmoid(abs(diff_final))
-                  
+            # Original
+            # bpm_output = self.bpm_previous + diff_final * self.scaling * self.exp_base_scaling ** (self.exp_power_scaling * abs(diff_final)) + self.bias
+            bpm_output = self.bpm_previous + diff_final * self.scaling
+            
+  
             del self.list_window[0]
             
             self.bpm_previous = bpm_output
             
             self.bpm_queue.append(bpm_output)
             # output = self.delay(bpm_output)
-            
-            return bpm_output
+            return bpm_output, diff_acceleration, diff_acc_sign, diff_acc_sign_coefficient, diff_final, diff_main
+        else:
+            return None, 0, 0, 0, 0, 0
+
 
 def fft_half(sig_window, sampling_rate, n_fft):
     s_fft = np.fft.fft(sig_window)
@@ -349,7 +403,7 @@ if __name__ == "__main__":
             for speed in speed_info:
                 speeds[line.split('.')[0]].append([int(speed.split('_')[0]), int(speed.split('_')[1])])
     
-    total_data, algorithms = load_dataset_3()
+    total_data, algorithms = load_dataset()
     
     index = [0,3,5,7,9,'total']
     columns = deepcopy(algorithms)
@@ -413,6 +467,11 @@ if __name__ == "__main__":
             
             total_results = []
             ampl_input_list = []
+            acc_log = []
+            acc_sign_log = []
+            diff_acc_sign_coefficient_log = []
+            diff_final_log = []
+            diff_main_log = []
             for i in range(len(coords_input_y_detrend)-fft_window):
                 ldmk_bpf = signal.sosfilt(sos, coords_input_y_detrend[i:i+fft_window])
                 
@@ -445,10 +504,16 @@ if __name__ == "__main__":
                 if i == 0:
                     run_start = True
                     initial_bpm = x[0]
-                    est_bpm = model.run(ampl_input, run_start, initial_bpm)
+                    est_bpm, acc, acc_sign, diff_acc_sign_coefficient, diff_final, diff_main = model.run(ampl_input, run_start, initial_bpm)
                 else:
                     run_start = False
-                    est_bpm = model.run(ampl_input, run_start)
+                    est_bpm, acc, acc_sign, diff_acc_sign_coefficient, diff_final, diff_main = model.run(ampl_input, run_start)
+                
+                acc_log.append(acc)
+                acc_sign_log.append(acc_sign)
+                diff_acc_sign_coefficient_log.append(diff_acc_sign_coefficient)
+                diff_final_log.append(diff_final)
+                diff_main_log.append(diff_main)
                 
                 if est_bpm is not None:
                     total_results.append(est_bpm)
@@ -526,6 +591,7 @@ if __name__ == "__main__":
             
             final_table_mae.loc['total', algorithm] += x_acc_mae
             final_table_rmse.loc['total', algorithm] += x_acc_rmse
+            
             if 0 <= x_acc_r2 <= 1:
                 final_table_r2.loc['total', algorithm] += x_acc_r2
                 final_table_count4r2.loc['total', algorithm] += 1
