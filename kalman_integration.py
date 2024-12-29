@@ -198,7 +198,7 @@ def main():
     """
     save_base = "D:/home/BCML/drax/PAPER/materials/kalman_integration_improved/"
     
-    base_path = "D:/home/BCML/drax/PAPER/materials/fft_version/"
+    base_path = "D:/home/BCML/drax/PAPER/materials/fft_version_6sec_good_index/"
     all_entries = os.listdir(base_path)
     folders = [entry for entry in all_entries if os.path.isdir(os.path.join(base_path, entry))]
     for folder in folders:

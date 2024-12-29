@@ -17,6 +17,42 @@ from PyEMD import CEEMDAN
 from scipy.fft import fft, fftfreq
 import importlib.util
 
+def import_function_from_file(file_path, function_name):
+    module_name = os.path.splitext(os.path.basename(file_path))[0]
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return getattr(module, function_name)
+
+data_total, algorithms = load_dataset()
+
+path = "D:/home/BCML/IITP/rPPG-Toolbox/evaluation/post_process.py"
+function = "_calculate_fft_hr"
+cal_hr_fft = import_function_from_file(path, function)
+sampling_rate = 30.0
+window_seconds = 6
+window_size = int(sampling_rate*window_seconds)
+
+save_path = "D:/home/BCML/drax/PAPER/data/treadmill_dataset/results/rppg_toolbx_hr_5th_fft/"
+for algorithm in algorithms:
+    os.makedirs(f"{save_path}{algorithm}", exist_ok=True)
+
+for key in data_total.keys():
+    for algorithm in algorithms:
+        bvp = data_total[key][algorithm]['pred']
+        label = data_total[key][algorithm]['label']
+        hr_list = []
+        for i in range(len(bvp)-window_size):
+            hr_list.append(cal_hr_fft(bvp[i:i+window_size]))
+        # np.save(f"{save_path}{algorithm}/{key}.npy", np.array(hr_list))
+        ax_pred_hr = np.linspace(180, len(hr_list)+180, len(hr_list))
+        plt.title(f"{key}, {algorithm}, Prediction length: {len(hr_list)}, prediction ax first point: {ax_pred_hr[0]}, prediction ax last point: {ax_pred_hr[-1]} label length: {len(label)}")
+        plt.plot(label, label="label")
+        plt.plot(ax_pred_hr, hr_list, label=f"predicted HR of {algorithm}")
+        plt.show()
+        
+        
+
 
 label_index = "6sec_plot"
 order = "5th"

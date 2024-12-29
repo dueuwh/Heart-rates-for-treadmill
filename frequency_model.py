@@ -703,7 +703,7 @@ if __name__ == "__main__":
                 x4_acc = x4_acc[:-(len(x4_acc)-len(total_results))]
             
             #==============================================================================
-            # Matching x, y length for long dataset
+            # Matching x, y length if those datasets are longer datasets
             #==============================================================================
             
             if speed3_end != None:
@@ -781,8 +781,8 @@ if __name__ == "__main__":
                     else:
                         indices4partial_acc.append([value[0], value[1]-good_index])
             else:
-                for value in temp_value:
-                    indices4partial_acc.append(value)
+                for value in temp_value[1:]:
+                    indices4partial_acc.append([value[0], value[1]-speed3_start])
             
             previous_point = 0
             for index in range(len(indices4partial_acc)+1):
@@ -796,6 +796,7 @@ if __name__ == "__main__":
                     else:
                         temp_freq = total_results[previous_point:]
                         temp_y = y4_acc[previous_point:]
+                        index -= 1
 
                 total_results_acc_mae = mean_absolute_error(temp_y, temp_freq)
                 total_results_acc_rmse = np.sqrt(mean_squared_error(temp_y, temp_freq))
@@ -864,6 +865,7 @@ if __name__ == "__main__":
                     else:
                         temp_x = x4_acc[previous_point:]
                         temp_y = y4_acc[previous_point:]
+                        index -= 1
                 
                 x_acc_mae = mean_absolute_error(temp_y, temp_x)
                 x_acc_rmse = np.sqrt(mean_squared_error(temp_y, temp_x))
