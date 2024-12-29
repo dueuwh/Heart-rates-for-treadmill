@@ -99,7 +99,7 @@ for key in data_total.keys():
         hr_list = []
         for i in range(len(bvp)-window_size):
             hr_list.append(cal_hr_fft(bvp[i:i+window_size]))
-        np.save(f"{save_path}{algorithm}/{key}.npy", np.array(hr_list))
+        # np.save(f"{save_path}{algorithm}/{key}.npy", np.array(hr_list))
         ax_pred_hr = np.linspace(180, len(hr_list)+180, len(hr_list))
         plt.title(f"{key}, {algorithm}, Prediction length: {len(hr_list)}, prediction ax first point: {ax_pred_hr[0]}, prediction ax last point: {ax_pred_hr[-1]} label length: {len(label)}")
         plt.plot(label, label="label")

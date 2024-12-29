@@ -17,6 +17,7 @@ from PyEMD import CEEMDAN
 from scipy.fft import fft, fftfreq
 import importlib.util
 
+
 label_index = "6sec_plot"
 order = "5th"
 
@@ -24,23 +25,19 @@ base_path = "D:/home/BCML/drax/PAPER/data/treadmill_dataset/"
 algorithms = os.listdir(f"{base_path}results/rppg_toolbox_hr_{order}/")
 rppg_bpm_pred_path = "D:/home/BCML/drax/PAPER/data/treadmill_dataset/results/rppg_toolbx_hr_5th_fft/"
 
-labels_total = natsort.natsorted([name for name in os.listdir(f"{base_path}rppg_toolbox/preprocess4hr_{label_index}/datafiles/") if "label" in name])
 labels = natsort.natsorted([name for name in os.listdir(f"{base_path}rppg_toolbox/preprocess4hr_{label_index}/datafiles/") if "label" in name])
-labels = natsort.natsorted([name for name in labels if "_3_" in name])
+
+for label in labels:
+    temp_label = np.load(f"{base_path}rppg_toolbox/preprocess4hr_{label_index}/datafiles/{label}")
+    # plt.plot(temp_label)
+    # plt.show()
 
 data_total = {}
 
 for algorithm in algorithms:
-    gt_list_total = natsort.natsorted([name for name in os.listdir(f"{base_path}results/rppg_toolbox_hr_{order}/{algorithm}") if "gt" in name])
-    pr_list_total = natsort.natsorted([name for name in os.listdir(f"{base_path}results/rppg_toolbox_hr_{order}/{algorithm}") if "bvp" in name])
-
-    gt_list = []
-    pr_list = []
-
-    for i in range(len(labels_total)):
-        if "_3_" in labels_total[i]:
-            gt_list.append(gt_list_total[i])
-            pr_list.append(pr_list_total[i])
+    gt_list = natsort.natsorted([name for name in os.listdir(f"{base_path}results/rppg_toolbox_hr_{order}/{algorithm}") if "gt" in name])
+    pr_list = natsort.natsorted([name for name in os.listdir(f"{base_path}results/rppg_toolbox_hr_{order}/{algorithm}") if "bvp" in name])
+    snr_list = natsort.natsorted([name for name in os.listdir(f"{base_path}results/rppg_toolbox_hr_{order}/{algorithm}") if "SNR" in name])
     
     for i in range(len(gt_list)):
         temp_hr_gt = np.load(f"{base_path}results/rppg_toolbox_hr_{order}/{algorithm}/{gt_list[i]}")
@@ -65,8 +62,15 @@ for algorithm in algorithms:
                 data_total[temp_key][algorithm]['label'].extend(temp_label)
             else:
                 data_total[temp_key][algorithm]['label'].append(temp_label.tolist()[0])
-                
-                
-                
-                
-                
+
+        temp_SNR = np.load(f"{base_path}results/rppg_toolbox_hr_{order}/{algorithm}/{snr_list[i]}")
+
+        if 'SNR' not in data_total[temp_key][algorithm]:
+            data_total[temp_key][algorithm]['SNR'] = temp_SNR.tolist()
+        else:
+            if len(temp_SNR.tolist()) > 1:
+                data_total[temp_key][algorithm]['SNR'].extend(temp_SNR)
+            else:
+                data_total[temp_key][algorithm]['SNR'].append(temp_SNR.tolist()[0])
+
+
