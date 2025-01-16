@@ -26,7 +26,7 @@ def find_good_index(x, y, speed3_start, error_threshold=10.0, verbose=False):
                 print("error: ", error)
                 print("good_index: ", i+speed3_start)
                 plt.figure(figsize=(12,6))
-                plt.title(f"x: {x[i+speed3_start-180]} y: {y[i+speed3_start]}")
+                #plt.title(f"x: {x[i+speed3_start-180]} y: {y[i+speed3_start]}")
                 plt.plot([i+180 for i in range(len(x))], x, label="x", zorder=2)
                 plt.plot(y, label='y', zorder=3)
                 plt.axvline(i+speed3_start, 0, 200, c='r', zorder=1)
@@ -145,7 +145,7 @@ def load_dataset():
                 data_total[temp_key] = {}
             if algorithm not in data_total[temp_key]:
                 data_total[temp_key][algorithm] = {}
-            
+
             data_total[temp_key][algorithm]['pred'] = np.load(f"{rppg_bpm_pred_path}{algorithm}/{temp_key}.npy").tolist()
             
             if 'label' not in data_total[temp_key][algorithm]:
@@ -420,7 +420,7 @@ def compute_fft(signal, sampling_freq=30):
     return xf, yf
 
 if __name__ == "__main__":
-    start_good_index = False
+    start_good_index = True
     good_index = 0
     
     path = "D:/home/BCML/IITP/rPPG-Toolbox/evaluation/post_process.py"
@@ -442,7 +442,7 @@ if __name__ == "__main__":
     
     total_data, algorithms = load_dataset()
     
-    index = [0,3,5,7,9,'total']
+    index = [3,5,7,9,'total']
     columns = deepcopy(algorithms)
     for algorithm in algorithms:
         columns.append(f'Frequency_{algorithm}')
@@ -457,11 +457,22 @@ if __name__ == "__main__":
     columns4spectrogram_pearson = ["total"]
     final_table_spectrogram_pearson = pd.DataFrame(0.0, index=index, columns=columns4spectrogram_pearson)
     final_table_spectrogram_pearson_count = pd.DataFrame(0.0, index=index, columns=columns4spectrogram_pearson)
+    final_table_spectrogram_pearson_total = []
     
-    for num in range(23): 
+    temp_coords_list = os.listdir("D:/home/BCML/drax/PAPER/data/coordinates/stationary_kalman_2nd/")
+    selected_files = []
+    for name in temp_coords_list:
+        if "_3_" in name:
+            selected_files.append(name)
+    
+    
+    select_file_index = [temp_coords_list.index(name) for name in selected_files]
+
+    # for num in range(23): 
+    for num in select_file_index:
         for al_index, algorithm in enumerate(algorithms):
             
-            os.makedirs(f"./materials/fft_version_6_sec/{algorithm}", exist_ok=True)
+            os.makedirs(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}", exist_ok=True)
             
             input_num = label_num = num
             coords_path = "D:/home/BCML/drax/PAPER/data/coordinates/stationary_kalman_2nd/"
@@ -483,27 +494,27 @@ if __name__ == "__main__":
             
             if al_index == 0:
                 plt.figure(figsize=(12,6))
-                plt.title(f"{title_plot} preprocessed data")
+                #plt.title(f"{title_plot} preprocessed data")
                 plt.plot(coords_input_y_detrend, label="input data")
                 plt.legend()
-                plt.savefig(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_input_data_plot.png")
+                plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_input_data_plot.png")
                 plt.show()
                 
                 plt.figure(figsize=(12,6))
-                plt.title(f"{title_plot} raw data")
+                #plt.title(f"{title_plot} raw data")
                 plt.plot(coords_input[:, 1], label="raw data")
                 plt.legend()
-                plt.savefig(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_raw_data_plot.png")
+                plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_raw_data_plot.png")
                 plt.show()
                 
-                frequencies, times, Sxx = signal.spectrogram(coords_input_y_detrend, 30.0)
+                frequencies, times, Sxx = signal.spectrogram(coords_input_y_detrend, 30.0, nperseg=256)
                 plt.figure(figsize=(12, 6))
-                plt.title(f"{title_plot} spectrogram")
+                #plt.title(f"{title_plot} spectrogram")
                 plt.pcolormesh(times, frequencies, 10 * np.log10(Sxx), shading='gouraud')
                 plt.ylabel('Frequency [Hz]')
                 plt.xlabel('Time [sec]')
                 plt.colorbar(label='Intensity [dB]')
-                plt.savefig(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_spectrogram.png")
+                plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_spectrogram.png")
                 plt.show()
                 
                 max_indices = np.argmax(Sxx, axis=0)
@@ -513,10 +524,10 @@ if __name__ == "__main__":
                 plt.plot(times, max_frequencies, color='red', linewidth=2, label='Max Amplitude Frequency')
                 plt.ylabel('Frequency [Hz]')
                 plt.xlabel('Time [sec]')
-                plt.title(f'{title_plot} spectrogram with maximum amplitude frequencies')
+                #plt.title(f'{title_plot} spectrogram with maximum amplitude frequencies')
                 plt.colorbar(label='Intensity [dB]')
                 plt.legend()
-                plt.savefig(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_spectrogram_with_max_frequency.png")
+                plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_spectrogram_with_max_frequency.png")
                 plt.show()
             
             
@@ -594,7 +605,7 @@ if __name__ == "__main__":
                 #     plt.figure(figsize=(12, 3))
                 #     plt.plot(xf, yf)
                 #     plt.scatter(xf[np.where(yf==max(yf))], max(yf), s=10, c='r')
-                #     plt.title(f'IMF {i+1} Frequency Spectrum')
+                #     #plt.title(f'IMF {i+1} Frequency Spectrum')
                 #     plt.xlabel('Frequency [Hz]')
                 #     plt.ylabel('Amplitude')
                 #     plt.grid()
@@ -638,19 +649,56 @@ if __name__ == "__main__":
             # drawing figures for paper
             #==============================================================================
             if al_index == 0:
+                temp_total_spectrogram_pearson = []
+                
                 interval_freq = len(y)/len(ampl_input_list)
                 plt.figure(figsize=(12, 6))
-                plt.title(f"{coords_folders[input_num]} STFT")
+                #plt.title(f"{coords_folders[input_num]} STFT")
                 plt.plot([i*interval_freq for i in range(len(ampl_input_list))], ampl_input_list, label="STFT")
-                plt.savefig(f"./materials/fft_version_6_sec/{coords_folders[input_num]}_stft_input.png")
+                plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{coords_folders[input_num]}_stft_input.png")
                 plt.show()
                 
                 plt.figure(figsize=(12, 6))
-                plt.title(f"{title_plot} heart rate label")
+                #plt.title(f"{title_plot} heart rate label")
                 plt.plot(y, label="heart rate")
                 plt.legend()
-                plt.savefig(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_label.png")
+                plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_label.png")
                 plt.show()
+                
+                temp_label = []
+                temp_label_interval = len(y)/len(max_frequencies)
+                for i in range(len(max_frequencies)):
+                    temp_label.append(y[int(i*temp_label_interval)])
+                
+                # ddable graph
+                fig, ax1 = plt.subplots(figsize=(12, 6))
+                color = 'tab:red'
+                
+                ax1.set_xlabel('Time (sec)', fontsize=14)
+                ax1.set_ylabel('Frequnecy [dB]', color=color, fontsize=14)
+                ax1.plot(max_frequencies, color=color, label='Max frequency')
+                ax1.tick_params(axis='y', labelcolor=color, labelsize=12)
+                ax1.tick_params(axis='x', labelsize=12)
+                ax2 = ax1.twinx()
+                color = 'tab:blue'
+                ax2.set_ylabel('Label Heart rate [bpm]', color=color, fontsize=14)
+                ax2.plot(temp_label, color=color, label='Heart rate')
+                ax2.tick_params(axis='y', labelcolor=color, labelsize=12)
+                ax1.legend(loc='upper left', fontsize=12)
+                ax2.legend(loc='upper right', fontsize=12)
+                fig.tight_layout()  # 레이아웃 조정
+                plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_label_with_maxfreq.png")
+                plt.show()
+                
+                # plt.figure(figsize=(12,6))
+                # #plt.title(f"{title_plot} heart rates label and max frequencies of input")
+                # plt.plot(temp_label, label="heart rates label")
+                # plt.plot(max_frequencies, label="max frequencies")
+                # plt.legend()
+                # plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_label_with_maxfreq.png")
+                # plt.show()
+                
+                ljh_3_pearson = {3:0, 5:0, 7:0, 9:0, 'total':0}
                 
                 y4freq_pearson_interval = len(y)/len(max_frequencies)
                 y4freq_pearson = [y[int(i*y4freq_pearson_interval)] for i in range(len(max_frequencies))]
@@ -662,20 +710,79 @@ if __name__ == "__main__":
                 final_table_spectrogram_pearson.loc['total', 'total'] += corr_matrix.loc["max frequency", "Label"]
                 final_table_spectrogram_pearson_count.loc['total', 'total'] += 1
                 
+                ljh_3_pearson['total'] = round(deepcopy(corr_matrix.loc["max frequency", "Label"]), 2)
+                
+                temp_total_spectrogram_pearson.append(corr_matrix.loc["max frequency", "Label"])
+                
                 previous_point = 0
+                
+                temp_indices = []
+                for value in speeds[coords_folders[input_num].split('.')[0]]:
+                    temp_indices.append(value[1]/y4freq_pearson_interval )
+                
+                center_index = int(max(temp_indices)/2) + 1
+                
                 for value_set in speeds[coords_folders[input_num].split('.')[0]]:
+                    
+                    
+                    speed = value_set[0]                  
+                    index = value_set[1]
+                    
+                    if speed == 0:
+                        pass
+                    
+                    else:
+                    
+                        index = int(index/y4freq_pearson_interval)
+                        
+                        dict4pearson = {
+                            "max frequency":max_frequencies[previous_point:index],
+                            "Label":y4freq_pearson[previous_point:index]}
+                        df4pearson = pd.DataFrame(dict4pearson)
+                        corr_matrix = df4pearson.corr(method='pearson')
+                        final_table_spectrogram_pearson.loc[speed, "total"] += corr_matrix.loc["max frequency", "Label"]
+                        final_table_spectrogram_pearson_count.loc[speed, "total"] += 1
+                        temp_total_spectrogram_pearson.append(corr_matrix.loc["max frequency", "Label"])
+                        
+                        ljh_3_pearson[speed] = round(deepcopy(corr_matrix.loc["max frequency", "Label"]), 2)
+                
+                final_table_spectrogram_pearson_total.append(temp_total_spectrogram_pearson)
+                
+                fig, ax1 = plt.subplots(figsize=(12, 6))
+                color = 'tab:red'
+                
+                ax1.set_xlabel('Time (sec)', fontsize=14)
+                ax1.set_ylabel('Frequnecy [dB]', color=color, fontsize=14)
+                ax1.plot(max_frequencies, color=color, label='Max frequency')
+                ax1.tick_params(axis='y', labelcolor=color, labelsize=12)
+                ax1.tick_params(axis='x', labelsize=12)
+                ax2 = ax1.twinx()
+                color = 'tab:blue'
+                ax2.set_ylabel('Label Heart rate [bpm]', color=color, fontsize=14)
+                ax2.plot(temp_label, color=color, label='Heart rate')
+                ax2.tick_params(axis='y', labelcolor=color, labelsize=12)
+                ax1.legend(loc='upper left', fontsize=12)
+                ax2.legend(loc='upper right', fontsize=12)
+                
+                for i, value_set in enumerate(speeds[coords_folders[input_num].split('.')[0]]):
                     speed = value_set[0]
                     index = value_set[1]
                     
                     index = int(index/y4freq_pearson_interval)
+                       
+                    if i == 0:
+                        ax1.text(center_index, 2.45, f"The entire range pearson: {ljh_3_pearson['total']}", ha='center', va='bottom', fontsize=14, color='blue')
+                        ax1.text(index-1, 2, 0, ha='center', va='bottom', fontsize=14, color='green')
+                    ax1.axvline(index, 0, 10, c='g', zorder=0)
+                    ax1.text(index+1, 2, speed, ha='center', va='bottom', fontsize=14, color='green')
+                    if speed != 0:
+                        ax1.text(index+1, 1.8, f"Pearson", ha='left', va='bottom', fontsize=14, color='blue')
+                        ax1.text(index+1, 1.65, f"{ljh_3_pearson[speed]}", ha='left', va='bottom', fontsize=14, color='blue')
                     
-                    dict4pearson = {
-                        "max frequency":max_frequencies[previous_point:index],
-                        "Label":y4freq_pearson[previous_point:index]}
-                    df4pearson = pd.DataFrame(dict4pearson)
-                    corr_matrix = df4pearson.corr(method='pearson')
-                    final_table_spectrogram_pearson.loc[speed, "total"] += corr_matrix.loc["max frequency", "Label"]
-                    final_table_spectrogram_pearson_count.loc[speed, "total"] += 1
+                fig.tight_layout()  # 레이아웃 조정
+                plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_label_with_maxfreq_with_speed_and_pearson.png")
+                plt.show()
+                
             #==============================================================================
             
             #==============================================================================
@@ -722,13 +829,15 @@ if __name__ == "__main__":
             #==============================================================================
             
             plt.figure(figsize=(12,6))
-            plt.title(f"{title_plot} {algorithm}")
+            #plt.title(f"{title_plot} {algorithm}")
             if start_good_index:
                 if good_index != 0:
                     plt.plot([good_index + i for i in range(len(total_results))], total_results, label="frequency model pred")
                     plt.axvline(good_index, 0, 200, color="brown", linestyle='dotted', linewidth=2, label="rPPG MAE < 10.0")
             else:
                 plt.plot([speed3_start+i for i in range(len(total_results))], total_results, label="frequency model pred")
+            plt.xlabel("Frame number")
+            plt.ylabel("BPM")
             plt.plot(y, label="ground truth")
             plt.plot([i+180 for i in range(len(x))], x, label="rppg pred")
             temp_value = speeds[coords_folders[input_num].split('.')[0]]
@@ -739,7 +848,7 @@ if __name__ == "__main__":
             # plt.plot([i*interval_freq for i in range(len(ampl_input_list))], ampl_input_list, label="STFT")
             # plt.plot(coords_input_y_detrend, label="input data")
             plt.legend()
-            plt.savefig(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_performance.png")
+            plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_performance.png")
             plt.show()
 
             #==========================================================================================
@@ -756,7 +865,7 @@ if __name__ == "__main__":
             df4pearson = pd.DataFrame(dict4pearson)
             corr_matrix = df4pearson.corr(method='pearson')
             
-            with open(f"./materials/fft_version_6_sec/{algorithm}/performance.txt", 'a') as f:
+            with open(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/performance.txt", 'a') as f:
                 f.write(f"{coords_folders[input_num]} freq:mae({total_results_acc_mae})rmse({total_results_acc_rmse})r2({total_results_acc_r2})\n")
 
             final_table_mae.loc['total', f'Frequency_{algorithm}'] += total_results_acc_mae
@@ -810,7 +919,7 @@ if __name__ == "__main__":
                 
                 # save accuracy
                 
-                with open(f"./materials/fft_version_6_sec/{algorithm}/performance.txt", 'a') as f:
+                with open(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/performance.txt", 'a') as f:
                     f.write(f"{coords_folders[input_num]}speed({value[0]}) freq:mae({total_results_acc_mae})rmse({total_results_acc_rmse})r2({total_results_acc_r2})\n")
                 
                 final_table_mae.loc[int(temp_value[index][0]), f'Frequency_{algorithm}'] += total_results_acc_mae
@@ -838,7 +947,7 @@ if __name__ == "__main__":
             df4pearson = pd.DataFrame(dict4pearson)
             corr_matrix = df4pearson.corr(method='pearson')
             
-            with open(f"./materials/fft_version_6_sec/{algorithm}/performance.txt", 'a') as f:
+            with open(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/performance.txt", 'a') as f:
                 f.write(f"{coords_folders[input_num]} x:mae({x_acc_mae})rmse({x_acc_rmse})r2({x_acc_r2})\n")
             
             final_table_mae.loc['total', algorithm] += x_acc_mae
@@ -880,7 +989,7 @@ if __name__ == "__main__":
                 
                 # save accuracy
                 
-                with open(f"./materials/fft_version_6_sec/{algorithm}/performance.txt", 'a') as f:
+                with open(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/performance.txt", 'a') as f:
                     f.write(f"{coords_folders[input_num]}speed({value[0]}) x:mae({x_acc_mae})rmse({x_acc_rmse})r2({x_acc_r2})\n")
                 
                 final_table_mae.loc[int(temp_value[index][0]), algorithm] += x_acc_mae
@@ -906,24 +1015,27 @@ if __name__ == "__main__":
                 else:
                     diff_final_integral.append(diff_final_integral[i-1]+value)
             
-            plt.title(f"{title_plot} Input data")
-            plt.plot(minmax(acc_log), label="acc", zorder=0)
-            plt.plot(acc_sign_log, label="acc_diff_1", zorder=1)
-            plt.plot(diff_acc_sign_coefficient_log, label="acc_diff_1_mv", zorder=2)
+            #plt.title(f"{title_plot} Input data")
+            plt.plot(minmax(acc_log), label="freq mv", zorder=0)
+            # plt.plot(acc_sign_log, label="sign", zorder=1)
+            plt.plot(diff_acc_sign_coefficient_log, label="freq diff mv", zorder=2)
             plt.plot(diff_final_log, label="hr variance", zorder=3)
             # plt.plot(minmax(diff_final_integral), label="diff final integral", zorder=4)
             plt.plot(np.zeros(len(acc_log)), c="black", zorder=4)
-            plt.plot(minmax(diff_main_log), label="diff_main", zorder=5)
+            # plt.plot(minmax(diff_main_log), label="diff_main freq ewma", zorder=5)
             plt.plot()
             plt.legend()
-            plt.savefig(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_input_data.png")
+            plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num]}_input_data.png")
             plt.show()
             
-            np.save(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_y.npy", np.array(y))
-            np.save(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_x.npy", np.array(x))
-            np.save(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_total_results.npy", np.array(total_results))
-            np.save(f"./materials/fft_version_6_sec/{algorithm}/{coords_folders[input_num]}_ampl_input_list.npy", np.array(ampl_input_list))
+            np.save(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num].split('.')[0]}_y.npy", np.array(y4_acc))
+            np.save(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num].split('.')[0]}_x.npy", np.array(x4_acc))
+            np.save(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num].split('.')[0]}_total_results.npy", np.array(total_results))
+            np.save(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num].split('.')[0]}_ampl_input_list.npy", np.array(ampl_input_list))
+            np.save(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/{algorithm}/{coords_folders[input_num].split('.')[0]}_time_index.npy", np.array(indices4partial_acc))
     
+    final_table_spectrogram_pearson_total = pd.DataFrame(final_table_spectrogram_pearson_total)
+    final_table_spectrogram_pearson_total.to_excel(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/spectrogram_pearson_total.xlsx", index=False, header=False)
     #==========================================================================================
     # Save accuracy
     #==========================================================================================
@@ -935,12 +1047,12 @@ if __name__ == "__main__":
     final_table_pearson = final_table_pearson/final_table_count
     final_table_spectrogram_pearson = final_table_spectrogram_pearson/final_table_spectrogram_pearson_count
     
-    final_table_mae.to_excel(f"./materials/fft_version_6_sec/mae_table.xlsx")
-    final_table_rmse.to_excel(f"./materials/fft_version_6_sec/rmse_table.xlsx")
-    final_table_r2.to_excel(f"./materials/fft_version_6_sec/r2_table.xlsx")
-    final_table_r2_adjust.to_excel(f"./materials/fft_version_6_sec/r2_adjust_table.xlsx")
-    final_table_pearson.to_excel(f"./materials/fft_version_6_sec/pearson_table.xlsx")
-    final_table_spectrogram_pearson.to_excel(f"./materials/fft_version_6_sec/spectrogram_pearson_table.xlsx")
+    final_table_mae.to_excel(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/mae_table.xlsx")
+    final_table_rmse.to_excel(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/rmse_table.xlsx")
+    final_table_r2.to_excel(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/r2_table.xlsx")
+    final_table_r2_adjust.to_excel(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/r2_adjust_table.xlsx")
+    final_table_pearson.to_excel(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/pearson_table.xlsx")
+    final_table_spectrogram_pearson.to_excel(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/spectrogram_pearson_table.xlsx")
     
     #==========================================================================================
     # Drawing accuracy
@@ -948,26 +1060,26 @@ if __name__ == "__main__":
     
     plt.figure(figsize=(10,10))
     ax = sns.heatmap(final_table_mae, annot=True, vmin=10.0, vmax=100.0)
-    plt.title("total mae")
-    plt.savefig(f"./materials/fft_version_6_sec/mae_table.png")
+    #plt.title("total mae")
+    plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/mae_table.png")
     plt.show()
     
     plt.figure(figsize=(10,10))
     ax = sns.heatmap(final_table_rmse, annot=True, vmin=10.0, vmax=100.0)
-    plt.title("total rmse")
-    plt.savefig(f"./materials/fft_version_6_sec/rmse_table.png")
+    #plt.title("total rmse")
+    plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/rmse_table.png")
     plt.show()
     
     plt.figure(figsize=(10,10))
     ax = sns.heatmap(final_table_r2, annot=True, vmin=0.0, vmax=1.0)
-    plt.title("total r2")
-    plt.savefig(f"./materials/fft_version_6_sec/r2_table.png")
+    #plt.title("total r2")
+    plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/r2_table.png")
     plt.show()
     
     plt.figure(figsize=(10,10))
     ax = sns.heatmap(final_table_r2_adjust, annot=True, vmin=0.0, vmax=1.0)
-    plt.title("total r2")
-    plt.savefig(f"./materials/fft_version_6_sec/r2_adjust_table.png")
+    #plt.title("total r2")
+    plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/r2_adjust_table.png")
     plt.show()
     
     plt.figure(figsize=(10, 10))
@@ -977,12 +1089,12 @@ if __name__ == "__main__":
     sns.heatmap(final_table_pearson, mask=~mask, annot=annotations, fmt=".2f", cmap='Pastel1',
             cbar=False, linewidths=.5, linecolor='gray',
             annot_kws={"fontsize": 12, "color": "red"})
-    plt.title("total pearson")
-    plt.savefig(f"./materials/fft_version_6_sec/pearson_table.png")
+    #plt.title("total pearson")
+    plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/pearson_table.png")
     plt.show()
     
     plt.figure(figsize=(10, 10))
     ax = sns.heatmap(final_table_spectrogram_pearson, annot=True, vmin=-1.0, vmax=1.0, fmt=".2f")
-    plt.title("total pearson")
-    plt.savefig(f"./materials/fft_version_6_sec/spectrogram_pearson_table.png")
+    #plt.title("total pearson")
+    plt.savefig(f"./materials/fft_version_6sec_good_index_notitle_up_and_down/spectrogram_pearson_table.png")
     plt.show()
